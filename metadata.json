@@ -1,0 +1,6 @@
+{
+  "name": "Laboratorio de Despliegue Silencioso",
+  "description": "Herramienta visual y didáctica para construir scripts de instalación desatendida (.ps1, .bat, .sh), configurar switches silenciosos, variables de entorno, asociaciones de archivos y perfiles corporativos predeterminados.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
