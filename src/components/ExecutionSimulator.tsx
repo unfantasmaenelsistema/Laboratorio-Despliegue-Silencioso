@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   AlertTriangle,
   CheckCircle2,
@@ -21,6 +21,13 @@ export const ExecutionSimulator: React.FC<ExecutionSimulatorProps> = ({ state })
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
 
   const steps = buildSimulationSteps(state, fault);
+  const logRef = useRef<HTMLDivElement>(null);
+
+  // Mantener visible la salida del último paso ejecutado
+  useEffect(() => {
+    const el = logRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [completedCount]);
 
   // Reset progress if pipeline structure or fault mode changes
   useEffect(() => {
@@ -270,7 +277,12 @@ export const ExecutionSimulator: React.FC<ExecutionSimulatorProps> = ({ state })
                 )}
               </div>
 
-              <div className="p-5 font-mono text-xs sm:text-[13px] leading-relaxed space-y-3 min-h-[270px] max-h-[380px] overflow-y-auto">
+              <div
+                ref={logRef}
+                role="log"
+                aria-label="Salida del terminal simulado"
+                className="p-5 font-mono text-xs sm:text-[13px] leading-relaxed space-y-3 min-h-[270px] max-h-[380px] lg:max-h-[640px] overflow-y-auto [overflow-wrap:anywhere]"
+              >
                 {executedSteps.length === 0 ? (
                   <div className="text-slate-400 space-y-2 py-8">
                     <p>

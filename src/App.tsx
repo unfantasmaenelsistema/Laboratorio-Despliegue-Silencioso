@@ -27,39 +27,17 @@ import {
   PipelineState,
   generateScriptForState,
 } from './utils/scriptGenerator';
+import { DEFAULT_OPTIONS, normalizePipelineState } from './utils/pipelineState';
 
 const STORAGE_KEY = 'ufees_silent_deploy_lab_v2';
 
-const DEFAULT_OPTIONS: GlobalPipelineOptions = {
-  profileName: 'Estacion Corporativa Base',
-  organizationName: 'Un Fantasma en el Sistema',
-  sourceDirWin: 'C:\\Deploy\\Installers',
-  logDirWin: 'C:\\ProgramData\\CorpDeploy\\Logs',
-  logDirLinux: '/var/log/corp-deploy',
-  requireAdminCheck: true,
-  stopOnError: true,
-  includeDidacticComments: true,
-  dryRunMode: false,
-  generateDismXml: true,
-  waitForMsiMutex: true,
-  closeRunningApps: true,
-  checkDiskSpace: true,
-};
 
 function createInitialState(): PipelineState {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
-      const parsed = JSON.parse(saved) as PipelineState;
-      if (parsed && Array.isArray(parsed.selectedPackages) && parsed.options) {
-        return {
-          ...parsed,
-          options: {
-            ...DEFAULT_OPTIONS,
-            ...parsed.options,
-          },
-        };
-      }
+      const restored = normalizePipelineState(JSON.parse(saved));
+      if (restored) return restored;
     }
   } catch {
     // Ignore storage read errors in restricted sandboxes
@@ -156,7 +134,11 @@ export default function App() {
   };
 
   const handleFactoryReset = () => {
-    localStorage.removeItem(STORAGE_KEY);
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch {
+      // almacenamiento no disponible
+    }
     applyScenarioPreset(SCENARIO_PRESETS[0]);
   };
 
@@ -171,13 +153,13 @@ export default function App() {
             className="inline-flex items-center gap-2.5 text-base sm:text-lg font-bold tracking-tight text-slate-900 whitespace-nowrap shrink-0"
           >
             <BrandMark size="sm" />
-            <span>Laboratorio de Despliegue</span>
+            <span className="hidden min-[400px]:inline">Laboratorio de Despliegue</span>
           </a>
 
           {/* Zone 2: 5 concise single-line navigation links */}
           <nav
             aria-label="Navegación principal"
-            className="hidden lg:flex items-center gap-6 text-sm font-medium text-slate-600"
+            className="hidden xl:flex items-center gap-6 text-sm font-medium text-slate-600"
           >
             <a
               href="#constructor"
@@ -219,10 +201,13 @@ export default function App() {
             <button
               type="button"
               onClick={handleQuickDownload}
+              aria-label={`Descargar el script .${pipeline.format}`}
               className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-sky-700 hover:bg-sky-800 rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600"
             >
-              <Download className="w-3.5 h-3.5" />
-              <span>Descargar .{pipeline.format}</span>
+              <Download className="w-3.5 h-3.5" aria-hidden="true" />
+              <span>
+                <span className="hidden sm:inline">Descargar </span>.{pipeline.format}
+              </span>
             </button>
           </div>
         </div>
@@ -381,13 +366,7 @@ export default function App() {
               }
               onImportState={(imported: PipelineState) => {
                 setActivePresetId('custom');
-                setPipeline({
-                  ...imported,
-                  options: {
-                    ...DEFAULT_OPTIONS,
-                    ...imported.options,
-                  },
-                });
+                setPipeline(imported);
               }}
             />
           </div>

@@ -1,15 +1,32 @@
-import React, { useState } from 'react';
-import { CheckCircle2, XCircle } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { CheckCircle2, RotateCcw, XCircle } from 'lucide-react';
 import { DIAGNOSTIC_CHALLENGES } from '../data/catalog';
+import { countSolved, recordAnswer, sanitizeAnswers } from '../utils/challenges';
+
+const STORAGE_KEY = 'lds_casos_respuestas';
+
+function loadAnswers(): Record<string, string> {
+  try {
+    return sanitizeAnswers(JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}'));
+  } catch {
+    return {};
+  }
+}
 
 export const DiagnosticChallenges: React.FC = () => {
-  const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
+  // Solo cuenta la primera respuesta de cada caso: una vez elegida queda fijada
+  const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>(loadAnswers);
 
-  const solvedCount = DIAGNOSTIC_CHALLENGES.filter((ch) => {
-    const picked = selectedAnswers[ch.id];
-    const opt = ch.options.find((o) => o.id === picked);
-    return Boolean(opt?.isCorrect);
-  }).length;
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(selectedAnswers));
+    } catch {
+      // almacenamiento no disponible
+    }
+  }, [selectedAnswers]);
+
+  const solvedCount = countSolved(selectedAnswers);
+  const answeredCount = Object.keys(selectedAnswers).length;
 
   return (
     <section
@@ -30,15 +47,28 @@ export const DiagnosticChallenges: React.FC = () => {
               Diagnóstico de Scripts Defectuosos en Producción
             </h2>
             <p className="text-sm sm:text-base text-slate-600 mt-2 leading-relaxed">
-              Pon a prueba tu criterio identificando por qué fallan estos cuatro fragmentos reales habituales en despliegues corporativos con GPO, SCCM, Intune o Ansible.
+              Pon a prueba tu criterio identificando por qué fallan estos seis fragmentos reales habituales en despliegues corporativos con GPO, SCCM, Intune o Ansible.
             </p>
           </div>
 
-          <div className="text-xs sm:text-sm text-slate-600 tabular-nums shrink-0">
-            Casos resueltos correctamente:{' '}
-            <strong className="text-slate-900 font-semibold">
-              {solvedCount} de {DIAGNOSTIC_CHALLENGES.length}
-            </strong>
+          <div className="text-xs sm:text-sm text-slate-600 tabular-nums shrink-0 flex flex-col sm:items-end gap-1.5">
+            <p aria-live="polite">
+              Acertados a la primera:{' '}
+              <strong className="text-slate-900 font-semibold">
+                {solvedCount} de {DIAGNOSTIC_CHALLENGES.length}
+              </strong>
+            </p>
+            <p className="text-[11px] text-slate-500">Solo cuenta la primera respuesta de cada caso.</p>
+            {answeredCount > 0 && (
+              <button
+                type="button"
+                onClick={() => setSelectedAnswers({})}
+                className="inline-flex items-center gap-1.5 text-xs font-medium text-sky-700 hover:text-sky-900 cursor-pointer"
+              >
+                <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" />
+                Reiniciar los casos
+              </button>
+            )}
           </div>
         </div>
 
@@ -46,6 +76,8 @@ export const DiagnosticChallenges: React.FC = () => {
           {DIAGNOSTIC_CHALLENGES.map((challenge) => {
             const pickedId = selectedAnswers[challenge.id];
             const pickedOption = challenge.options.find((o) => o.id === pickedId);
+            const correctOption = challenge.options.find((o) => o.isCorrect);
+            const locked = Boolean(pickedOption);
 
             return (
               <article
@@ -68,7 +100,7 @@ export const DiagnosticChallenges: React.FC = () => {
                   </div>
 
                   <div className="bg-[#0B1120] text-slate-100 rounded-lg p-3.5 overflow-x-auto">
-                    <pre className="text-xs font-mono leading-relaxed whitespace-pre-wrap">
+                    <pre className="text-xs font-mono leading-relaxed whitespace-pre-wrap [overflow-wrap:anywhere]">
                       <code>{challenge.brokenSnippet.replace(/\r\n/g, '↵\n')}</code>
                     </pre>
                   </div>
@@ -76,21 +108,28 @@ export const DiagnosticChallenges: React.FC = () => {
                   <div className="space-y-2" role="radiogroup" aria-label={challenge.title}>
                     {challenge.options.map((opt) => {
                       const isChosen = pickedId === opt.id;
+                      const revealCorrect = locked && !isChosen && opt.isCorrect;
                       return (
                         <button
                           key={opt.id}
                           type="button"
+                          role="radio"
+                          aria-checked={isChosen}
+                          disabled={locked}
                           onClick={() =>
-                            setSelectedAnswers((prev) => ({
-                              ...prev,
-                              [challenge.id]: opt.id,
-                            }))
+                            setSelectedAnswers((prev) => recordAnswer(prev, challenge.id, opt.id))
                           }
-                          className={`w-full text-left p-3 rounded-lg border text-xs sm:text-sm transition-colors cursor-pointer ${
+                          className={`w-full text-left p-3 rounded-lg border text-xs sm:text-sm transition-colors ${
+                            locked ? 'cursor-default' : 'cursor-pointer'
+                          } ${
                             isChosen
                               ? opt.isCorrect
                                 ? 'bg-emerald-50/80 border-emerald-300 text-emerald-950 font-medium'
                                 : 'bg-red-50/80 border-red-300 text-red-950 font-medium'
+                              : revealCorrect
+                              ? 'bg-emerald-50/40 border-emerald-300 border-dashed text-emerald-950'
+                              : locked
+                              ? 'bg-slate-50/60 border-slate-200 text-slate-500'
                               : 'bg-slate-50/60 border-slate-200 text-slate-700 hover:bg-slate-100/80'
                           }`}
                         >
@@ -118,13 +157,20 @@ export const DiagnosticChallenges: React.FC = () => {
                       </p>
                     </div>
 
-                    {pickedOption.isCorrect && (
+                    {!pickedOption.isCorrect && correctOption && (
+                      <p className="text-xs sm:text-sm text-slate-700">
+                        <strong className="font-semibold">Respuesta correcta:</strong> {correctOption.label}{' '}
+                        {correctOption.explanation}
+                      </p>
+                    )}
+
+                    {(
                       <div className="space-y-1">
                         <span className="text-[11px] font-semibold text-slate-500">
                           Solución recomendada para producción:
                         </span>
                         <div className="bg-slate-900 text-emerald-300 rounded-lg p-3 overflow-x-auto">
-                          <pre className="text-xs font-mono leading-relaxed whitespace-pre-wrap">
+                          <pre className="text-xs font-mono leading-relaxed whitespace-pre-wrap [overflow-wrap:anywhere]">
                             <code>{challenge.fixedSnippet}</code>
                           </pre>
                         </div>

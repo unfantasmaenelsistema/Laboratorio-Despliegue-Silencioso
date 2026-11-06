@@ -32,7 +32,6 @@ export const BrandMark: React.FC<BrandMarkProps> = ({ size = 'md' }) => {
     <img
       src={logoSrc}
       alt="Logotipo de Un Fantasma en el Sistema"
-      referrerPolicy="no-referrer"
       onError={() => setImgFailed(true)}
       className={`${dims} object-contain shrink-0 select-none`}
     />

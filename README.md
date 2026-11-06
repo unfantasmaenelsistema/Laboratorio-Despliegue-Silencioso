@@ -1,174 +1,137 @@
-<div align="center">
-  <a href="https://www.unfantasmaenelsistema.com/" target="_blank" rel="noopener noreferrer">
-    <img src="./public/assets/aistudio/icono_81a3db5b.png" alt="Logotipo de Un Fantasma en el Sistema" width="110" height="110" />
-  </a>
+<p align="center">
+  <a href="https://www.unfantasmaenelsistema.com"><img src="public/assets/aistudio/icono_81a3db5b.png" width="110" alt="Un fantasma en el sistema"></a>
+</p>
 
-  # Laboratorio de Despliegue Silencioso y Automatización de Software
+<h1 align="center">Laboratorio de Despliegue Silencioso</h1>
 
-  **Herramienta visual, forense y didáctica para construir, auditar y simular scripts de instalación desatendida (`.ps1`, `.bat`, `.sh`, reglas Intune/SCCM, manifiestos WinGet DSC y asociaciones DISM XML).**
+<p align="center">
+  <b>Construye, audita y simula scripts de instalación desatendida para Windows y Linux</b><br>
+  PowerShell, Batch, Bash, detección Intune, WinGet DSC y XML de DISM · MSI, Inno Setup, NSIS, WiX Burn y Adobe · 6 casos de diagnóstico
+</p>
 
-  Un recurso abierto creado por [**Un Fantasma en el Sistema**](https://www.unfantasmaenelsistema.com/) para administradores de sistemas, ingenieros de despliegue (Intune, MECM/SCCM, GPO, Ansible) y estudiantes de Formación Profesional (**SMR · ASIR · DAW · DAM**) e Ingeniería Informática.
+<p align="center">
+  <a href="https://unfantasmaenelsistema.github.io/Laboratorio-Despliegue-Silencioso/"><b>▶ Abrir el laboratorio</b></a> ·
+  <a href="#qué-hace">Qué hace</a> ·
+  <a href="#switches-por-motor">Switches por motor</a> ·
+  <a href="#códigos-de-retorno">Códigos de retorno</a> ·
+  <a href="#desarrollo">Desarrollo</a> ·
+  <a href="https://www.unfantasmaenelsistema.com">unfantasmaenelsistema.com</a> ·
+  <a href="LICENSE">MIT</a>
+</p>
 
-  [**🌐 Visitar Un Fantasma en el Sistema**](https://www.unfantasmaenelsistema.com/) · [**🚀 Guía de Despliegue en GitHub Pages**](#-despliegue-en-github-pages-listo-para-subir) · [**📖 Mecánica Didáctica**](#-mecánica-didáctica-y-fundamentos-técnicos)
-</div>
+<p align="center">
+  <img src="https://img.shields.io/badge/navegador-sin_servidor-10b981?style=flat-square" alt="Sin servidor">
+  <img src="https://img.shields.io/badge/datos-100%25_locales-0284c7?style=flat-square" alt="Datos 100 % locales">
+  <img src="https://img.shields.io/badge/salidas-6_formatos-f59e0b?style=flat-square" alt="6 formatos de salida">
+  <img src="https://img.shields.io/badge/licencia-MIT-blue?style=flat-square" alt="MIT">
+</p>
 
----
+<p align="center">
+  <img src="docs/capturas/01-constructor.webp" width="900" alt="Portada con los cuatro escenarios corporativos, el constructor con los paquetes del catálogo y el inspector mostrando el script PowerShell generado">
+</p>
 
-## 📸 Capturas del Laboratorio
+Un banco de pruebas para aprender a desplegar software sin intervención del usuario, como se hace con GPO, Intune, MECM/SCCM o Ansible. Se eligen los paquetes, las variables de entorno, las asociaciones de archivo y las reglas del perfil predeterminado, y el laboratorio genera el script completo, explica cada switch y permite simular qué pasa cuando algo falla: otra instalación en curso, falta de elevación, un reinicio pendiente o un `/s` en minúscula.
 
-### 1. Constructor Modular e Inspector Multi-Formato en Vivo
-Construye colas de despliegue en 4 fases (Software, Variables de Entorno, Asociaciones de Archivo y Perfil Predeterminado Corporativo) mientras inspeccionas el código generado en tiempo real con comprobaciones empresariales de pre-vuelo (espera de mutex `Global\_MSIExecute`, cierre preventivo de procesos y verificación de espacio en disco).
+> [!NOTE]
+> Todo funciona en el navegador, sin servidor. El proyecto y las respuestas a los casos se guardan solo en el `localStorage` de ese navegador, y los `.exe` o `.msi` que se analizan en el inspector no salen del equipo.
 
-![Constructor Modular e Inspector de Scripts en Vivo](./docs/screenshots/01-constructor-visual.svg)
+> [!WARNING]
+> Los scripts generados tocan el registro (`HKLM`, `NTUSER.DAT` del perfil Default), el `PATH` y las asociaciones de archivo. Pruébalos primero en una máquina virtual, con la opción **Modo simulación (Dry-Run)** si hace falta.
 
----
+## Qué hace
 
-### 2. Inspector Forense de Binarios (`.exe` / `.msi`) y Auditor Sintáctico CLI
-Analiza cualquier archivo `.exe` o `.msi` local desde tu navegador (100 % en cliente mediante `FileReader` / `ArrayBuffer`) para identificar su empaquetador por *Magic Bytes* y cadenas PE (`Inno Setup`, `NSIS`, `MSI`, `WiX Burn`, `InstallShield`), o pega cualquier línea de comandos en el **Auditor en Vivo** para detectar fallos reales antes de llevarlos a producción.
+- **Constructor en cuatro fases**: paquetes, variables de entorno, asociaciones de archivo y perfil predeterminado (`C:\Users\Default\NTUSER.DAT` en Windows, `/etc/skel` en Linux). Incluye 12 paquetes reales (7-Zip, VS Code, Firefox ESR, LibreOffice, Git, VLC, Python, Acrobat Reader, Chrome Enterprise, Notepad++, Node.js y WireGuard), instaladores propios y cuatro escenarios preparados.
+- **Seis salidas**: PowerShell (`.ps1`, UTF-8 con BOM y CRLF), Batch (`.bat`, CRLF), Bash (`.sh`, LF sin BOM), regla de detección para Intune o MECM, configuración WinGet DSC y el `DefaultAppAssociations.xml` de DISM.
+- **Inspector de instaladores**: identifica el motor de un `.exe` o `.msi` local por sus cabeceras y cadenas (`D0 CF 11 E0` en MSI, `.wixburn`, `NullsoftInst`, `Inno Setup Setup Data`) y propone el comando silencioso y el de extracción.
+- **Auditor de comandos**: detecta y corrige `/s` en minúscula en NSIS, `/D=` entre comillas, propiedades MSI en minúscula, rutas `.msi` con espacios sin comillas, falta de `/norestart`, `setx` sobre `PATH`, `Start-Process` sin `-Wait`, Inno Setup sin `/SUPPRESSMSGBOXES` y `apt` interactivo.
+- **Anatomía de switches y mapa de persistencia**: qué hace cada parte de una línea de instalación y dónde queda escrito cada cambio.
+- **Simulador paso a paso** con inyección de fallos: 1618 (Windows Installer ocupado), 3010 (reinicio pendiente), error 5 sin elevación y bloqueo de NSIS en la Sesión 0.
+- **Seis casos de diagnóstico** con fragmentos rotos reales: `setx` que destroza el `PATH`, `HKCU` ejecutado como SYSTEM, NSIS colgado, CRLF en un script Bash, error 1618 y el hash de `UserChoice`.
 
-![Inspector Forense de Binarios y Auditor de Comandos](./docs/screenshots/02-inspector-binarios-auditor.svg)
+<p align="center">
+  <img src="docs/capturas/02-auditor.webp" width="900" alt="Auditor de comandos con un instalador de VLC que lleva /s en minúscula y /D= entre comillas: dos errores explicados y el comando corregido con /S y /D= al final sin comillas">
+</p>
 
----
+<p align="center">
+  <img src="docs/capturas/03-simulador-1618.webp" width="900" alt="Simulador con la colisión 1618 inyectada: el script reintenta, Windows Installer queda libre, se instalan los paquetes y la salida global es 0">
+</p>
 
-### 3. Anatomía Interactiva de Switches y Mapa de Persistencia (`NTUSER.DAT` / `/etc/skel`)
-Haz clic sobre cada token de un comando desatendido para comprender su función exacta y visualiza cómo fluyen los cambios en el Registro de Windows (`HKLM`, `HKU\DefaultCorpProfile`) y en sistemas POSIX (`/etc/profile.d`, `/etc/xdg/mimeapps.list`, `/etc/skel`).
+### Los casos de diagnóstico
 
-![Anatomía de Switches y Mapa de Registro](./docs/screenshots/03-anatomia-switches-arquitectura.svg)
+Solo cuenta la primera respuesta de cada caso: al elegir una opción, el caso queda cerrado y, si la respuesta es incorrecta, se muestra la correcta con su explicación y la solución para producción. El botón «Reiniciar los casos» los deja como al principio.
 
----
+<p align="center">
+  <img src="docs/capturas/04-casos.webp" width="900" alt="Casos de diagnóstico: el caso 01 fallado y bloqueado, con la respuesta correcta y la solución que conserva REG_EXPAND_SZ; el caso 02 acertado; marcador 1 de 6">
+</p>
 
-### 4. Simulador de Ejecución en Sesión 0 y Retos de Diagnóstico
-Ejecuta tu cola paso a paso en una terminal simulada bajo contexto `NT AUTHORITY\SYSTEM` (Sesión 0), inyecta incidentes reales (colisión de mutex `1618`, reinicio diferido `3010`, falta de elevación o bloqueo por `/s` minúscula en NSIS) y resuelve **6 casos reales de producción**.
+## Switches por motor
 
-![Simulador de Ejecución en Sesión 0 y Diagnóstico](./docs/screenshots/04-simulador-ejecucion-retos.svg)
+| Motor | Cómo reconocerlo | Silencioso | Con barra de progreso | Sin reinicio | Log |
+| :-- | :-- | :-- | :-- | :-- | :-- |
+| Windows Installer (`.msi`) | Cabecera `D0 CF 11 E0` (OLE2) | `/qn` | `/qb!` | `/norestart` | `/L*v "C:\Logs\app.log"` |
+| Inno Setup (`.exe`) | Cadena `Inno Setup Setup Data` | `/VERYSILENT /SUPPRESSMSGBOXES /SP-` | `/SILENT` | `/NORESTART` | `/LOG="C:\Logs\app.log"` |
+| NSIS (`.exe`) | Cadena `NullsoftInst` | `/S` (en mayúscula) | — | Según el instalador | — |
+| WiX Burn (`.exe`) | Sección PE `.wixburn` | `/quiet` | `/passive` | `/norestart` | `/log "C:\Logs\app.log"` |
+| InstallShield (`.exe`) | Cadena `InstallShield` | `/s /v"/qn"` | — | `/v"/norestart"` | `/v"/L*v C:\Logs\app.log"` |
+| Bootstrapper de Adobe (`.exe`) | Firma de Adobe, `setup.ini` | `/sAll /rs /rps` | `/sPB /rs` | `/msi /norestart` | `/msi /L*v "C:\Logs\app.log"` |
+| APT (Debian/Ubuntu) | — | `DEBIAN_FRONTEND=noninteractive NEEDRESTART_MODE=a apt-get install -y -q` | — | — | `/var/log/apt/` |
 
----
+- En NSIS, `/S` puede ir en cualquier posición; el único parámetro con posición fija es `/D=Ruta`, que va el último y sin comillas aunque la ruta tenga espacios.
+- En MSI solo las propiedades públicas (todo en mayúsculas, como `ALLUSERS=1`) llegan a la fase de instalación.
+- En el bootstrapper de Adobe, todo lo que va detrás de `/msi` se pasa a `msiexec`.
 
-## ✨ Características Principales
+## Códigos de retorno
 
-| Módulo del Laboratorio | Qué aporta en el aula y en entornos reales de TI |
-| :--- | :--- |
-| **Constructor Multi-Formato (6 Salidas)** | Genera scripts listos para producción en **PowerShell (`.ps1`)**, **Batch CMD (`.bat`)**, **Shell Linux (`.sh`)**, **Reglas de Detección Intune/SCCM (`Detect-*.ps1`)**, **WinGet Configuration DSC (`.winget`)** y **Plantillas DISM (`DefaultAppAssociations.xml`)**. |
-| **Catálogo Real por Motor de Instalación** | 12 paquetes corporativos preconfigurados (*7-Zip*, *VS Code*, *Firefox ESR*, *LibreOffice*, *Git*, *VLC*, *Python 3.12*, *Acrobat Reader DC*, *Chrome Enterprise*, *Notepad++*, *Node.js LTS*, *WireGuard*) + creación de paquetes personalizados. |
-| **Inspector Forense de Instaladores Local** | Permite arrastrar cualquier `.exe` o `.msi` desde tu ordenador para detectar el motor de empaquetado inspeccionando sus cabeceras hexadecimales (`D0 CF 11 E0`, secciones `.wixburn`, firmas `NullsoftInst` o `Inno Setup Setup Data`) sin subir datos a ningún servidor. |
-| **Auditor y Corrector de Comandos CLI** | Detecta automáticamente trampas críticas: `/s` en minúscula en NSIS, comillas prohibidas en `/D=Ruta`, propiedades privadas en minúscula en MSI, truncamiento destructivo de `setx PATH` y ausencia de `-Wait` en PowerShell. |
-| **Gestión Segura de Variables de Entorno** | Evita el límite destructivo de 1024 caracteres de `setx.exe` utilizando `[Environment]::SetEnvironmentVariable(..., 'Machine')` de forma idempotente en Windows y scripts modulares en `/etc/profile.d/99-corp-env.sh` en GNU/Linux. |
-| **Asociaciones de Archivo Corporativas** | Explica y genera la doble capa `assoc` + `ftype` junto con el XML de `dism.exe /Online /Import-DefaultAppAssociations` para superar la protección de hash criptográfico `UserChoice` de Windows 10/11, además de `/etc/xdg/mimeapps.list` en Linux. |
-| **Sellado del Perfil Predeterminado (`Default User`)** | Monta temporalmente `C:\Users\Default\NTUSER.DAT` en `HKU\DefaultCorpProfile` (con descarga segura `reg unload`) y configura `/etc/skel` para que todo nuevo empleado herede un entorno limpio y seguro en su primer inicio de sesión. |
-| **Codificación y Finales de Línea Exactos** | Exporta `.ps1` en `UTF-8 con BOM + CRLF` (compatibilidad total con Windows PowerShell 5.1), `.bat` en `CP65001 + CRLF` y `.sh` en `UTF-8 sin BOM + LF` estricto (evitando el error `bad interpreter: ^M` en el kernel Linux). |
+| Código | Nombre | Qué hacer en el script |
+| :-: | :-- | :-- |
+| `0` | `ERROR_SUCCESS` | Seguir. |
+| `3010` | `ERROR_SUCCESS_REBOOT_REQUIRED` | Es un éxito: anotar que hace falta reiniciar y seguir. |
+| `1641` | `ERROR_SUCCESS_REBOOT_INITIATED` | El instalador ha lanzado el reinicio; evitarlo con `/norestart`. |
+| `1618` | `ERROR_INSTALL_ALREADY_RUNNING` | Otra instalación MSI tiene ocupado Windows Installer: reintentar (los scripts generados lo hacen hasta 20 veces cada 30 s). |
+| `1603` | `ERROR_INSTALL_FAILURE` | Abrir el log `/L*v` y buscar `Return value 3`. |
 
----
+## Desarrollo
 
-## 📖 Mecánica Didáctica y Fundamentos Técnicos
-
-### 1. Referencia Rápida de Motores y Switches Silenciosos
-
-| Motor / Empaquetador | Cómo Identificarlo (Cabecera / Strings) | Switch Silencioso Total | Barra Pasiva | Evitar Reinicio | Registro de Auditoría (Log) |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **Windows Installer (`.msi`)** | Cabecera `D0 CF 11 E0` (OLE2 Compound File) | `/qn` | `/qb!` | `/norestart` | `/L*v "C:\Logs\app.log"` |
-| **Inno Setup (`.exe`)** | Cadena `"Inno Setup Setup Data"` en binario | `/VERYSILENT /SUPPRESSMSGBOXES /SP-` | `/SILENT` | `/NORESTART` | `/LOG="C:\Logs\app.log"` |
-| **NSIS Nullsoft (`.exe`)** | Cadena `"NullsoftInst"` / `"Nullsoft.NSIS"` | `/S` *(mayúscula estricta)* | `/S` | Depende del script | N/A *(directorio con `/D=Ruta` sin comillas al final)* |
-| **WiX Burn Bundle (`.exe`)** | Sección PE `.wixburn` / `"WixBurnManifest"` | `/quiet` | `/passive` | `/norestart` | `/log "C:\Logs\app.log"` |
-| **InstallShield (`.exe`)** | Cadena `"InstallShield"` / `setup.ini` | `/s /v"/qn /norestart"` o `/sAll /rs` | `/sPB` | `/msi /norestart` | `/L*v "C:\Logs\app.log"` |
-| **APT / Dpkg (`.deb` Linux)** | Paquetes Debian / Ubuntu en scripts Bash | `DEBIAN_FRONTEND=noninteractive apt-get install -y -q` | `apt-get install -y` | No reinicia el SO | `-o Dpkg::Options::="--force-confdef"` |
-
-### 2. Códigos de Retorno Estándar (`%ERRORLEVEL%` / `$LASTEXITCODE`)
-- **`0` (`ERROR_SUCCESS`)**: Instalación completada limpiamente.
-- **`3010` (`ERROR_SUCCESS_REBOOT_REQUIRED`)**: Instalación **exitosa**, pero quedan archivos en uso pendientes de sustitución en el próximo reinicio (`PendingFileRenameOperations`). Un script profesional **nunca** debe abortar ante un código `3010`.
-- **`1641` (`ERROR_SUCCESS_REBOOT_INITIATED`)**: El instalador ha iniciado un reinicio inmediato. Prevenir siempre con `/norestart`.
-- **`1618` (`ERROR_INSTALL_ALREADY_RUNNING`)**: Otra instancia de `msiexec.exe` mantiene ocupado el mutex global `Global\_MSIExecute`. Se mitiga esperando a que el mutex quede libre antes de invocar el paquete.
-- **`1603` (`ERROR_INSTALL_FAILURE`)**: Fallo fatal interno. Abrir el archivo generado con `/L*v` y buscar hacia arriba desde la cadena `"Return value 3"`.
-
----
-
-## 💻 Instalación y Ejecución Local
-
-Requisitos previos: **Node.js 18+** y **npm**.
-
-```bash
-# 1. Clonar el repositorio
-git clone https://github.com/TU_USUARIO/laboratorio-despliegue-silencioso.git
-cd laboratorio-despliegue-silencioso
-
-# 2. Instalar dependencias
-npm install
-
-# 3. Iniciar servidor de desarrollo (http://localhost:3000)
-npm run dev
-```
-
-Para verificar tipos TypeScript y generar la compilación estática de producción en la carpeta `dist/`:
+Requisitos: Node.js 20 o superior.
 
 ```bash
-npm run lint
-npm run build
+git clone https://github.com/unfantasmaenelsistema/Laboratorio-Despliegue-Silencioso.git
+cd Laboratorio-Despliegue-Silencioso
+npm ci
+npm run dev      # http://localhost:3000
+npm test         # 48 tests de catálogo, generadores, auditor, simulador y casos
+npm run lint     # comprobación de tipos
+npm run build    # versión estática en dist/
 ```
 
----
-
-## 🚀 Despliegue en GitHub Pages (Listo para Subir)
-
-Este repositorio está preconfigurado para funcionar de inmediato en **GitHub Pages** sin necesidad de tocar rutas ni configuraciones:
-
-1. **`vite.config.ts` incluye `base: './'`**, por lo que todos los assets, fuentes e iconos funcionan en cualquier subruta (`https://tu-usuario.github.io/nombre-repo/`) o dominio personalizado.
-2. **Incluye `public/.nojekyll`** para evitar que Jekyll filtre recursos estáticos.
-3. **Incluye el workflow oficial `.github/workflows/deploy-pages.yml`**.
-
-### Pasos para publicarlo en tu cuenta de GitHub:
-
-1. Crea un repositorio nuevo en GitHub y sube el código:
-   ```bash
-   git init
-   git add .
-   git commit -m "feat: versión inicial del Laboratorio de Despliegue Silencioso"
-   git branch -M main
-   git remote add origin https://github.com/TU_USUARIO/TU_REPOSITORIO.git
-   git push -u origin main
-   ```
-2. En tu repositorio de GitHub, entra en **Settings → Pages**.
-3. En el desplegable **Build and deployment → Source**, selecciona **GitHub Actions**.
-4. El workflow **Desplegar en GitHub Pages** se ejecutará automáticamente y en menos de 1 minuto tendrás la aplicación publicada en vivo.
-
----
-
-## 🗂️ Estructura del Proyecto
+Cada `push` a `main` pasa por el workflow [`deploy.yml`](.github/workflows/deploy.yml) (tipos, tests y build) y se publica en GitHub Pages. Los pull requests ejecutan las mismas comprobaciones sin publicar.
 
 ```text
-├── .github/workflows/
-│   └── deploy-pages.yml              # Publicación automática en GitHub Pages con GitHub Actions
-├── docs/screenshots/                 # Capturas de pantalla vectoriales de alta resolución para el README
-├── public/
-│   ├── .nojekyll                     # Desactiva procesado Jekyll en GitHub Pages
-│   └── assets/aistudio/              # Logotipo oficial de Un Fantasma en el Sistema
-├── src/
-│   ├── components/
-│   │   ├── BinaryAndCommandLab.tsx   # Inspector forense .exe/.msi local y auditor CLI en tiempo real
-│   │   ├── BrandMark.tsx             # Identidad visual con fallback resiliente
-│   │   ├── DiagnosticChallenges.tsx  # 6 retos interactivos de resolución de incidentes reales
-│   │   ├── ExecutionSimulator.tsx    # Simulador paso a paso en Sesión 0 con inyección de fallos
-│   │   ├── PipelineBuilder.tsx       # Constructor de 4 etapas (Paquetes, Entorno, Archivos, Perfil)
-│   │   ├── ScriptInspector.tsx       # Generador en vivo (.ps1, .bat, .sh, Intune, WinGet, XML) y JSON
-│   │   ├── SwitchAnatomySection.tsx  # Disección interactiva de comandos y tabla de Exit Codes
-│   │   └── SystemArchitectureMap.tsx # Mapa comparativo Registro Windows (NTUSER.DAT) vs Linux (/etc/skel)
-│   ├── data/
-│   │   └── catalog.ts                # Catálogo de 12 paquetes, muestras forenses y retos de auditoría
-│   ├── types/
-│   │   └── deployment.ts             # Modelos de datos y enumeraciones TypeScript
-│   ├── utils/
-│   │   └── scriptGenerator.ts        # Motores de generación de scripts, auditoría CLI y simulación
-│   ├── App.tsx                       # Composición principal y gestión de escenarios corporativos
-│   └── index.css                     # Configuración tipográfica (Plus Jakarta Sans, Public Sans, IBM Plex Mono)
-├── index.html                        # Metadatos SEO, OpenGraph y carga tipográfica
-├── LICENSE                           # Licencia MIT
-├── package.json                      # Scripts y dependencias del proyecto
-└── vite.config.ts                    # Configuración Vite con base relativa './' para GitHub Pages
+src/
+├── data/catalog.ts            Paquetes, variables, asociaciones, reglas de perfil, muestras y casos
+├── utils/scriptGenerator.ts   Generadores (.ps1, .bat, .sh, Intune, WinGet, XML), auditor y simulador
+├── utils/pipelineState.ts     Validación de proyectos guardados o importados
+├── utils/challenges.ts        Puntuación de los casos (cuenta la primera respuesta)
+├── utils/*.test.ts            Tests (Vitest)
+├── App.tsx                    Página, escenarios y estado del proyecto
+└── components/                Constructor, inspector, auditor, anatomía, simulador y casos
 ```
 
----
+## Novedades de la versión 2
 
-## 👤 Autoría y Enlaces
+- **Error 1618**: el script esperaba mientras existiera el mutex `Global\_MSIExecute`, que puede existir sin estar ocupado. Ahora PowerShell y Batch reintentan la instalación mientras `msiexec` devuelva 1618, y el caso 05 enseña esa solución tratando 3010 como éxito.
+- **DISM**: los scripts importaban `DefaultAppAssociations.xml` sin haberlo escrito nunca. Ahora lo escriben antes de importarlo (here-string en PowerShell y `echo` escapado en Batch).
+- **PATH**: se lee del registro sin expandir y se guarda como `REG_EXPAND_SZ`, para no perder referencias como `%SystemRoot%`, y la comprobación de duplicados compara ruta a ruta.
+- **NSIS**: el catálogo y el caso 03 decían que `/S` debe ir al final; lo que debe ir al final es `/D=`. El generador ponía `/S` detrás de un `/D=` añadido por el usuario y ahora lo deja el último.
+- **Batch**: un nombre con paréntesis, como «Acrobat Reader DC (MUI)», cerraba antes de tiempo el bloque de control de errores; 1641 se trata como reinicio pendiente.
+- **Bash**: `NEEDRESTART_MODE=a` para que `apt` no se quede esperando en Ubuntu, paquetes sin duplicar, avisos de los que necesitan repositorio extra y `dconf update` tras escribir la configuración.
+- **WinGet DSC**: `PSDscResources/Environment` no admite el destino `User`; las variables de usuario se comentan y los valores van entre comillas simples (en comillas dobles, `\P` sería un escape YAML inválido).
+- **Auditor**: marcaba como error un `/S` correcto y convertía `/VERYSILENT` en `/VERYVERYSILENT`.
+- **Catálogo**: Acrobat Reader x64 (proceso `Acrobat`, extracción con `-sfx_o`, sin la falsa firma de InstallShield), WinGet `Google.Chrome` para el MSI de Chrome, `SSL_CERT_FILE` frente a `NODE_EXTRA_CA_CERTS`, el proxy de `apt` y otras precisiones.
+- **Casos**: se podían probar opciones hasta acertar y el marcador contaba la última; ahora cuenta la primera, la respuesta queda fijada y se guarda.
+- **Proyectos**: un `.json` importado o guardado sin alguna sección dejaba la página en blanco; ahora se valida y un archivo no válido muestra un aviso.
+- Fuera dependencias sin uso (Gemini, Express, Motion) y las capturas dibujadas en SVG; se arregla la instalación con npm, el terminal del simulador sigue al último paso, el diseño ya no se desborda en móvil ni a 1024 px, y la build lleva CSP.
 
-Creado para [**Un Fantasma en el Sistema**](https://www.unfantasmaenelsistema.com/).
+## Créditos y licencia
 
-- 🌐 **Sitio Web y Blog Técnico**: [https://www.unfantasmaenelsistema.com/](https://www.unfantasmaenelsistema.com/)
-- 📄 **Licencia**: Distribuido bajo licencia [MIT](./LICENSE). Libre para uso docente, laboratorios de Formación Profesional, universidades y departamentos de sistemas.
+Desarrollado para **[Un Fantasma en el Sistema](https://www.unfantasmaenelsistema.com)**. Distribuido bajo licencia [MIT](LICENSE).

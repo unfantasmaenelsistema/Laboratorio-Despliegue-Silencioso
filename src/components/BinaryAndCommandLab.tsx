@@ -238,14 +238,14 @@ export const BinaryAndCommandLab: React.FC<BinaryAndCommandLabProps> = ({
           <div
             role="tablist"
             aria-label="Modo del laboratorio de inspección"
-            className="flex items-center gap-1 p-1 bg-slate-100 rounded-lg self-start"
+            className="flex flex-col sm:flex-row items-stretch sm:items-center gap-1 p-1 bg-slate-100 rounded-lg self-stretch sm:self-start"
           >
             <button
               type="button"
               role="tab"
               aria-selected={activeMode === 'forensic'}
               onClick={() => setActiveMode('forensic')}
-              className={`px-3.5 py-2 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+              className={`px-3.5 py-2 text-xs font-medium rounded-md transition-colors text-left sm:whitespace-nowrap shrink-0 cursor-pointer ${
                 activeMode === 'forensic'
                   ? 'bg-white text-slate-900 shadow-xs font-semibold'
                   : 'text-slate-600 hover:text-slate-900'
@@ -258,7 +258,7 @@ export const BinaryAndCommandLab: React.FC<BinaryAndCommandLabProps> = ({
               role="tab"
               aria-selected={activeMode === 'auditor'}
               onClick={() => setActiveMode('auditor')}
-              className={`px-3.5 py-2 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+              className={`px-3.5 py-2 text-xs font-medium rounded-md transition-colors text-left sm:whitespace-nowrap shrink-0 cursor-pointer ${
                 activeMode === 'auditor'
                   ? 'bg-white text-slate-900 shadow-xs font-semibold'
                   : 'text-slate-600 hover:text-slate-900'
