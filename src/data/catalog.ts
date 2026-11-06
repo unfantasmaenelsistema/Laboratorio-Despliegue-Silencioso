@@ -74,7 +74,7 @@ export const SOFTWARE_CATALOG: SoftwarePackageTemplate[] = [
     caseSensitiveWarning:
       'NSIS distingue mayúsculas: /S funciona; /s en minúscula se ignora y abre ventana gráfica.',
     didacticSummary:
-      'Instalador NSIS clásico. Exige /S en mayúscula estricta. Permite desactivar telemetría de mantenimiento y accesos directos intrusivos.',
+      'Instalador NSIS clásico. Exige /S en mayúscula. Admite opciones propias como /TaskbarShortcut=false, /DesktopShortcut=false o /MaintenanceService=false (el servicio que instala actualizaciones sin UAC).',
   },
   {
     id: 'libreoffice-msi',
@@ -133,9 +133,9 @@ export const SOFTWARE_CATALOG: SoftwarePackageTemplate[] = [
     noRestartSwitchWin: '',
     allUsersSwitchWin: '',
     caseSensitiveWarning:
-      'En NSIS, /S debe ir siempre como el último parámetro de la línea de comandos (salvo si se usa /D=Ruta).',
+      'NSIS distingue mayúsculas: /S activa el modo silencioso y /s se ignora. El único parámetro con posición fija es /D=Ruta, que debe ir el último y sin comillas.',
     didacticSummary:
-      'Ejemplo clásico de orden estricto en NSIS: el código LCID de idioma (/L=1034 para español) precede obligatoriamente al modificador final /S.',
+      'Instalador NSIS con selector de idioma: /L=1034 (LCID de español) evita el diálogo de idioma y /S lo instala en silencio. El orden de /L y /S es indiferente; solo /D=Ruta tiene que ir al final.',
   },
   {
     id: 'python-burn',
@@ -160,14 +160,14 @@ export const SOFTWARE_CATALOG: SoftwarePackageTemplate[] = [
   {
     id: 'acrobat-is',
     name: 'Acrobat Reader DC (MUI)',
-    version: '24.004',
+    version: '24.004.20270',
     vendor: 'Adobe',
     category: 'Visores Documentales',
     engine: InstallerEngine.INSTALLSHIELD,
-    winInstallerFile: 'AcroRdrDC24004_MUI.exe',
+    winInstallerFile: 'AcroRdrDCx642400420270_MUI.exe',
     linuxPackageName: 'evince',
     wingetId: 'Adobe.Acrobat.Reader.64-bit',
-    processNameWin: 'AcroRd32',
+    processNameWin: 'Acrobat',
     detectPathWin: 'C:\\Program Files\\Adobe\\Acrobat DC\\Acrobat\\Acrobat.exe',
     silentSwitchWin: '/sAll /rs /rps',
     passiveSwitchWin: '/sPB /rs',
@@ -186,7 +186,7 @@ export const SOFTWARE_CATALOG: SoftwarePackageTemplate[] = [
     engine: InstallerEngine.MSI,
     winInstallerFile: 'googlechromestandaloneenterprise64.msi',
     linuxPackageName: 'chromium',
-    wingetId: 'Google.Chrome.EXE',
+    wingetId: 'Google.Chrome',
     processNameWin: 'chrome',
     detectPathWin: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
     silentSwitchWin: '/qn',
@@ -237,7 +237,7 @@ export const SOFTWARE_CATALOG: SoftwarePackageTemplate[] = [
     allUsersSwitchWin: 'ALLUSERS=1',
     extraPropsWin: 'ADDLOCAL="NodeRuntime,npm,EnvironmentPath"',
     didacticSummary:
-      'MSI que permite seleccionar qué características exactas de la tabla Feature instalar mediante ADDLOCAL (evitando instalar Chocolatey o scripts de compilación innecesarios).',
+      'MSI que permite elegir qué características de la tabla Feature se instalan con ADDLOCAL (runtime, npm, accesos directos, PATH…). Las herramientas de compilación nativa con Chocolatey son una casilla aparte del asistente y en modo /qn no se instalan.',
   },
   {
     id: 'wireguard-msi',
@@ -307,7 +307,7 @@ export const INITIAL_ENV_VARS: EnvVarRule[] = [
     scope: EnvScope.MACHINE,
     isPathAppend: false,
     description:
-      'Configura salida HTTP/S para gestores de paquetes CLI (git, pip, npm, curl, apt) a través del proxy perimetral de la red.',
+      'Configura la salida HTTPS de herramientas de línea de comandos (git, pip, npm, curl) a través del proxy perimetral. Ojo: apt solo lee https_proxy en minúscula y sudo la descarta; para apt usa Acquire::https::Proxy en /etc/apt/apt.conf.d/.',
     enabled: false,
   },
   {
@@ -319,7 +319,7 @@ export const INITIAL_ENV_VARS: EnvVarRule[] = [
     scope: EnvScope.MACHINE,
     isPathAppend: false,
     description:
-      'Permite a runtimes multiplataforma (Python, Node, Git) confiar en la Autoridad de Certificación (PKI) interna de la organización.',
+      'Hace que OpenSSL y Python (ssl, pip) confíen en la Autoridad de Certificación interna. No basta para todo: Node.js usa NODE_EXTRA_CA_CERTS, Git usa http.sslCAInfo (o GIT_SSL_CAINFO) y requests usa REQUESTS_CA_BUNDLE.',
     enabled: false,
   },
   {
@@ -413,7 +413,7 @@ export const INITIAL_PROFILE_RULES: CorporateProfileRule[] = [
     winMechanism:
       'Monta C:\\Users\\Default\\NTUSER.DAT en HKU\\DefaultCorp y fija Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced -> HideFileExt = 0.',
     linuxMechanism:
-      'Escribe preferencia dconf/GTK en /etc/skel/.config/ para visualización detallada en gestores de archivos.',
+      'En Linux el nombre completo (con extensión) ya se muestra siempre. Como equivalente, fija en dconf la vista de lista de Nautilus (/etc/dconf/db/local.d + dconf update).',
     didacticWhy:
       'Mitiga ataques de ingeniería social con doble extensión (ej. factura_trimestral.pdf.exe). Al inyectarse en NTUSER.DAT del perfil Default, todo nuevo empleado que inicie sesión por primera vez hereda la protección.',
     enabled: true,
@@ -423,7 +423,7 @@ export const INITIAL_PROFILE_RULES: CorporateProfileRule[] = [
     title: 'Suprimir asistentes de bienvenida y privacidad en primer inicio',
     category: 'Experiencia Corporativa',
     winMechanism:
-      'Política HKLM\\SOFTWARE\\Policies\\Microsoft\\Edge (HideFirstRunExperience=1) y clave CloudContent\\DisableWindowsConsumerFeatures=1.',
+      'Política HKLM\\SOFTWARE\\Policies\\Microsoft\\Edge (HideFirstRunExperience=1) y CloudContent\\DisableWindowsConsumerFeatures=1 (esta solo surte efecto en Enterprise y Education).',
     linuxMechanism:
       'Preconfigura policies.json en /etc/firefox/policies/ con OverrideFirstRunPage y DisableTelemetry=true.',
     didacticWhy:
@@ -437,7 +437,7 @@ export const INITIAL_PROFILE_RULES: CorporateProfileRule[] = [
     winMechanism:
       'Copia settings.json corporativo dentro de C:\\Users\\Default\\AppData\\Roaming\\Code\\User\\settings.json (UTF-8, LF, telemetría desactivada).',
     linuxMechanism:
-      'Despliega estructura en /etc/skel/.config/Code/User/settings.json y alias corporativos en /etc/skel/.bashrc.',
+      'Despliega la plantilla en /etc/skel/.config/Code/User/settings.json.',
     didacticWhy:
       'Diferencia clave de arquitectura: escribir en %APPDATA% durante el despliegue solo afecta al Administrador o SYSTEM. Escribir en C:\\Users\\Default (o /etc/skel en Linux) actúa como molde para todas las cuentas futuras.',
     enabled: true,
@@ -447,9 +447,9 @@ export const INITIAL_PROFILE_RULES: CorporateProfileRule[] = [
     title: 'Limpiar accesos directos comerciales y crear enlace de Soporte TI',
     category: 'Escritorio Gestionado',
     winMechanism:
-      'Elimina .lnk residuales creados por instaladores en C:\\Users\\Public\\Desktop y genera Portal-Soporte-TI.url.',
+      'Elimina .lnk residuales creados por instaladores en C:\\Users\\Public\\Desktop y genera Soporte-Documentacion-TI.url.',
     linuxMechanism:
-      'Configura lanzador corporativo .desktop validado en /etc/skel/Escritorio/ y /usr/share/applications/.',
+      'Crea un enlace .desktop de soporte en /etc/skel/Escritorio/ para las cuentas nuevas.',
     didacticWhy:
       'Muchos instaladores escriben iconos en el Escritorio Público ignorando switches secundarios; una fase post-instalación sanea el escritorio compartido.',
     enabled: false,
@@ -461,7 +461,7 @@ export const INITIAL_PROFILE_RULES: CorporateProfileRule[] = [
     winMechanism:
       'Establece ExecutionPolicy RemoteSigned en ámbito LocalMachine y activa EnableScriptBlockLogging=1 en HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\PowerShell\\ScriptBlockLogging.',
     linuxMechanism:
-      'Configura registro de comandos administrativos mediante auditd / syslog en /etc/profile.d/90-corp-audit.sh.',
+      'Fija HISTTIMEFORMAT (solo lectura) en /etc/profile.d/90-corp-audit.sh para que el historial de bash lleve fecha y hora. Para una auditoría real, auditd.',
     didacticWhy:
       'Permite la ejecución de scripts de inicio de sesión internos firmados mientras registra en el Visor de Eventos (ID 4104) cualquier código PowerShell ejecutado en el puesto.',
     enabled: false,
@@ -618,20 +618,20 @@ export const BINARY_INSPECTOR_SAMPLES: BinarySampleProfile[] = [
   },
   {
     id: 'sample-is-acrobat',
-    fileName: 'AcroRdrDC24004_MUI.exe',
-    fileSizeDesc: '312.0 MB · InstallShield / Adobe Setup Bootstrapper',
+    fileName: 'AcroRdrDCx642400420270_MUI.exe',
+    fileSizeDesc: 'Varios cientos de MB · bootstrapper propio de Adobe (no es InstallShield)',
     detectedEngine: InstallerEngine.INSTALLSHIELD,
-    magicBytesHex: '4D 5A 90 00 03 00 00 00 ... 49 6E 73 74 61 6C 6C 53 68 69 65 6C 64',
+    magicBytesHex: '4D 5A 90 00 03 00 00 00 (MZ: ejecutable PE autoextraíble)',
     signatureStrings: [
-      'InstallShield Setup Player',
-      'setup.ini / AcroRead.msi',
+      'Firma Authenticode de Adobe',
+      'setup.ini / AcroPro.msi (Reader x64 unificado)',
       '/sAll /rs /rps /msi',
     ],
     recommendedSilentCmd:
-      '"AcroRdrDC24004_MUI.exe" /sAll /rs /rps /msi /norestart ALLUSERS=1 EULA_ACCEPT=YES',
-    unpackCommand: '"AcroRdrDC24004_MUI.exe" -nos_o"C:\\Temp\\AdobeExtract" -nos_ne',
+      '"AcroRdrDCx642400420270_MUI.exe" /sAll /rs /rps /msi /norestart ALLUSERS=1 EULA_ACCEPT=YES',
+    unpackCommand: '"AcroRdrDCx642400420270_MUI.exe" -sfx_o"C:\\Temp\\AdobeExtract" -sfx_ne',
     forensicExplanation:
-      'Empaquetador corporativo con MSI embebido. Permite extraer el .msi subyacente y el archivo setup.ini con el flag -nos_ne para aplicar transformaciones .mst personalizadas con Adobe Customization Wizard.',
+      'Autoextraíble de Adobe con un MSI embebido. Con -sfx_o"carpeta" -sfx_ne extrae setup.exe, setup.ini y el .msi sin instalar (los paquetes antiguos usaban -nos_o y -nos_ne), para aplicarles un .mst hecho con Adobe Customization Wizard.',
     catalogPackageId: 'acrobat-is',
   },
 ];
@@ -713,7 +713,7 @@ export const ENGINE_ANATOMY_EXAMPLES: EngineAnatomyExample[] = [
         token: 'ALLUSERS=1 CREATEDESKTOPLINK=0',
         role: 'Propiedades Públicas MSI',
         explanation:
-          'Pares PROPIEDAD=VALOR al final del comando. En el estándar MSI, únicamente las propiedades escritas íntegramente en MAYÚSCULAS pueden modificarse desde la línea de comandos.',
+          'Pares PROPIEDAD=VALOR al final del comando. Solo las propiedades públicas (íntegramente en MAYÚSCULAS) llegan a la fase de instalación; una propiedad con minúsculas es privada y su valor se pierde.',
         pitfall: 'Escribir allusers=1 en minúsculas es ignorado porque MSI las trata como propiedades privadas internas.',
       },
     ],
@@ -872,7 +872,7 @@ export const EXIT_CODES_REFERENCE: ExitCodeEntry[] = [
     symbolicName: 'ERROR_INSTALL_ALREADY_RUNNING',
     severity: 'error',
     meaning: 'Otra transacción de msiexec está activa simultáneamente (bloqueo del mutex global _MSIExecute).',
-    automationAction: 'Implementar bucle de espera/reintento verificando el mutex Global\\_MSIExecute antes de invocar msiexec.',
+    automationAction: 'Reintentar mientras msiexec devuelva 1618 (por ejemplo, 20 intentos cada 30 s). Que exista el mutex Global\\_MSIExecute no basta para saber si está ocupado.',
   },
   {
     code: 1603,
@@ -910,7 +910,7 @@ export const DIAGNOSTIC_CHALLENGES: DiagnosticChallenge[] = [
         label: 'setx trunca variables a 1024 caracteres y además %PATH% mezcla el PATH de usuario con el de máquina.',
         isCorrect: true,
         explanation:
-          'Exacto. %PATH% contiene la concatenación de Sistema + Usuario actual, contaminando el registro HKLM, y setx corta cualquier cadena que supere 1024 caracteres destruyendo rutas previas.',
+          'Exacto. %PATH% contiene la concatenación de Sistema + Usuario actual, contaminando el registro HKLM, y setx corta cualquier cadena que supere 1024 caracteres destruyendo rutas previas. Además guarda el valor ya expandido, así que las referencias como %SystemRoot% se pierden.',
       },
       {
         id: 'opt-c',
@@ -919,7 +919,13 @@ export const DIAGNOSTIC_CHALLENGES: DiagnosticChallenge[] = [
         explanation: 'Dos puntos (:) es el separador de PATH en sistemas POSIX/Linux; Windows utiliza punto y coma (;).',
       },
     ],
-    fixedSnippet: `powershell -NoProfile -Command "$p=[Environment]::GetEnvironmentVariable('Path','Machine'); if($p -notlike '*C:\\CorpTools\\bin*'){ [Environment]::SetEnvironmentVariable('Path', $p.TrimEnd(';')+';C:\\CorpTools\\bin', 'Machine') }"`,
+    fixedSnippet: `# Leer el PATH de máquina SIN expandir (%SystemRoot%…) y añadir la ruta solo si falta
+$k = [Microsoft.Win32.Registry]::LocalMachine.OpenSubKey('SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Environment', $true)
+$p = $k.GetValue('Path', '', 'DoNotExpandEnvironmentNames')
+if (($p -split ';') -notcontains 'C:\\CorpTools\\bin') {
+  $k.SetValue('Path', $p.TrimEnd(';') + ';C:\\CorpTools\\bin', 'ExpandString')
+}
+$k.Close()`,
   },
   {
     id: 'chal-hkcu-system',
@@ -967,10 +973,10 @@ export const DIAGNOSTIC_CHALLENGES: DiagnosticChallenge[] = [
       },
       {
         id: 'opt-b',
-        label: 'En instaladores NSIS el switch /S distingue mayúsculas y debe situarse al final tras /L=1034.',
+        label: 'En instaladores NSIS el switch /S distingue mayúsculas: /s en minúscula no activa el modo silencioso.',
         isCorrect: true,
         explanation:
-          'Exacto. Al pasar /s en minúscula, NSIS ignora el modo silencioso y dibuja un asistente gráfico invisible en la Sesión 0 esperando un clic humano que jamás ocurrirá.',
+          'Exacto. Al pasar /s en minúscula, NSIS ignora el modo silencioso y dibuja un asistente gráfico invisible en la Sesión 0 esperando un clic humano que jamás ocurrirá. El orden de /S y /L=1034 da igual; solo /D=Ruta tiene que ir al final.',
       },
       {
         id: 'opt-c',
@@ -1030,7 +1036,7 @@ export const DIAGNOSTIC_CHALLENGES: DiagnosticChallenge[] = [
         label: 'Otro proceso msiexec.exe (ej. Windows Update o agente MDM) tiene bloqueado el mutex Global\\_MSIExecute en el arranque.',
         isCorrect: true,
         explanation:
-          'Exacto. El motor Windows Installer solo admite una transacción ExecuteSequence a la vez en todo el sistema operativo. Esperar a que se libere Global\\_MSIExecute evita el error 1618.',
+          'Exacto. Windows Installer solo admite una transacción de instalación a la vez en todo el sistema. La solución robusta es reintentar mientras msiexec devuelva 1618. Fíjate también en que el script original trataba 3010 (éxito con reinicio pendiente) como un fallo.',
       },
       {
         id: 'opt-c',
@@ -1039,7 +1045,15 @@ export const DIAGNOSTIC_CHALLENGES: DiagnosticChallenge[] = [
         explanation: '7-Zip no exige reinicio previo; el código 1618 significa explícitamente ERROR_INSTALL_ALREADY_RUNNING.',
       },
     ],
-    fixedSnippet: `$mutex = [System.Threading.Mutex]::OpenExisting("Global\\_MSIExecute")\n# Esperar hasta que cualquier otra instalación en curso libere el motor MSI`,
+    fixedSnippet: `# Reintentar hasta 10 minutos mientras otra instalación MSI tenga el motor ocupado
+$i = 0
+do {
+  $p = Start-Process msiexec.exe -ArgumentList '/i "C:\\Deploy\\7z2408-x64.msi" /qn /norestart' -Wait -PassThru
+  if ($p.ExitCode -ne 1618) { break }
+  Start-Sleep -Seconds 30; $i++
+} while ($i -lt 20)
+# 0 = correcto, 3010 = correcto con reinicio pendiente
+if ($p.ExitCode -notin 0, 3010) { exit $p.ExitCode }`,
   },
   {
     id: 'chal-userchoice-hash',

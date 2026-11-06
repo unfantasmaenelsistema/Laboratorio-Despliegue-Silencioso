@@ -9,6 +9,7 @@ import {
   Upload,
 } from 'lucide-react';
 import { GlobalPipelineOptions, ScriptFormat } from '../types/deployment';
+import { normalizePipelineState } from '../utils/pipelineState';
 import {
   PipelineState,
   generateDismAssociationsXml,
@@ -35,6 +36,7 @@ export const ScriptInspector: React.FC<ScriptInspectorProps> = ({
   const [specialTab, setSpecialTab] = useState<'none' | 'xml' | 'intune' | 'winget'>('none');
   const [copied, setCopied] = useState(false);
   const [showGhGuide, setShowGhGuide] = useState(false);
+  const [importMessage, setImportMessage] = useState<{ ok: boolean; text: string } | null>(null);
 
   const activeTab: InspectorTab =
     specialTab !== 'none' ? specialTab : state.format;
@@ -145,16 +147,22 @@ export const ScriptInspector: React.FC<ScriptInspectorProps> = ({
   const handleImportJsonProject = async (
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
-    const file = e.target.files?.[0];
+    const input = e.target;
+    const file = input.files?.[0];
     if (!file) return;
     try {
-      const text = await file.text();
-      const parsed = JSON.parse(text) as PipelineState;
-      if (parsed && Array.isArray(parsed.selectedPackages) && parsed.options) {
-        onImportState(parsed);
+      const imported = normalizePipelineState(JSON.parse(await file.text()));
+      if (imported) {
+        onImportState(imported);
+        setImportMessage({ ok: true, text: `Proyecto «${file.name}» importado.` });
+      } else {
+        setImportMessage({ ok: false, text: `«${file.name}» no es un proyecto exportado desde este laboratorio.` });
       }
     } catch {
-      // Ignore invalid JSON file
+      setImportMessage({ ok: false, text: `«${file.name}» no contiene JSON válido.` });
+    } finally {
+      // Permite volver a importar el mismo archivo
+      input.value = '';
     }
   };
 
@@ -377,7 +385,7 @@ export const ScriptInspector: React.FC<ScriptInspectorProps> = ({
               }
               className="w-4 h-4 rounded border-slate-300 text-sky-700 focus:ring-sky-600"
             />
-            <span>Esperar mutex _MSIExecute</span>
+            <span>Reintentar ante 1618 (MSI ocupado)</span>
           </label>
 
           <label className="inline-flex items-center gap-2 cursor-pointer select-none">
@@ -517,12 +525,20 @@ export const ScriptInspector: React.FC<ScriptInspectorProps> = ({
               <span>Importar (.json)</span>
               <input
                 type="file"
-                accept=".json"
+                accept=".json,application/json"
                 onChange={handleImportJsonProject}
-                className="hidden"
+                className="sr-only"
               />
             </label>
           </div>
+          {importMessage && (
+            <p
+              role="status"
+              className={`w-full text-xs ${importMessage.ok ? 'text-emerald-700' : 'text-red-700'}`}
+            >
+              {importMessage.text}
+            </p>
+          )}
 
           <button
             type="button"
@@ -538,10 +554,10 @@ export const ScriptInspector: React.FC<ScriptInspectorProps> = ({
           <div className="pt-2 text-xs text-slate-600 space-y-2 border-t border-slate-200">
             <p className="font-medium text-slate-800 flex items-center gap-1.5">
               <FileCode2 className="w-3.5 h-3.5 text-sky-700 shrink-0" />
-              <span>Workflow de GitHub Actions incluido (.github/workflows/deploy-pages.yml)</span>
+              <span>Workflow de GitHub Actions incluido (.github/workflows/deploy.yml)</span>
             </p>
             <p>
-              El repositorio ya incluye el workflow oficial para GitHub Pages y rutas relativas (<code className="text-slate-800">base: './'</code>). Al subir este proyecto a GitHub y activar <strong>Settings → Pages → Source: GitHub Actions</strong>, se desplegará automáticamente en cada <code className="text-slate-800">git push</code>.
+              El <a href="https://github.com/unfantasmaenelsistema/Laboratorio-Despliegue-Silencioso" target="_blank" rel="noopener noreferrer" className="text-sky-700 hover:underline">repositorio del laboratorio</a> usa rutas relativas (<code className="text-slate-800">base: './'</code>) y un workflow que comprueba los tipos, ejecuta los tests y publica la build en GitHub Pages en cada <code className="text-slate-800">push</code> a <code className="text-slate-800">main</code>. Para un fork basta con activar <strong>Settings → Pages → Source: GitHub Actions</strong>.
             </p>
           </div>
         )}
